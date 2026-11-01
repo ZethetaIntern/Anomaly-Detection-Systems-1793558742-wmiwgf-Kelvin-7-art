@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Anomaly Detection · Prototype</title>
+    <!-- Font Awesome for icons (optional, but enhances look) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f0f3f8;
+            padding: 24px;
+            color: #1e293b;
+        }
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        /* header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-weight: 600;
+            font-size: 1.9rem;
+            color: #0b1e3a;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 i {
+            color: #2563eb;
+        }
+        .badge {
+            background: #e6edf9;
+            color: #1e4b8f;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        /* cards */
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.05), 0 4px 8px -4px rgba(0, 0, 0, 0.02);
+            padding: 20px 24px;
+            border: 1px solid #eef2f6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border: 1px solid #e9edf3;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #5b6b82;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #0b1e3a;
+            line-height: 1.2;
+        }
+        .stat-sub {
+            font-size: 0.8rem;
+            color: #3d5a80;
+            margin-top: 4px;
+        }
+        /* buttons */
+        .btn {
+            background: #ffffff;
+            border: 1px solid #d0dae8;
+            color: #1e3a5f;
+            padding: 9px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .btn i {
+            font-size: 0.9rem;
+            color: #4361ee;
+        }
+        .btn:hover {
+            background: #f9fcff;
+            border-color: #b3c6e0;
+        }
+        .btn-primary {
+            background: #1e4b8f;
+            border: 1px solid #1e4b8f;
+            color: white;
+        }
+        .btn-primary i {
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #153a6e;
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 0.8rem;
+        }
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: #4b6584;
+        }
+        .btn-ghost:hover {
+            background: #f0f4fa;
+        }
+        /* tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th {
+            text-align: left;
+            padding: 12px 8px 8px 8px;
+            font-weight: 500;
+            color: #5b6b82;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid #e6ecf4;
+        }
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f4fa;
+            vertical-align: middle;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .badge-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .badge-high {
+            background: #ffedd5;
+            color: #9a3412;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .badge-medium {
+            background: #fef9c3;
+            color: #854d0e;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .badge-low {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .badge-resolved {
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .badge-fp {
+            background: #e9e9ef;
+            color: #4b5563;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        .score-bar {
+            display: inline-block;
+            width: 70px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .score-fill {
+            height: 100%;
+            background: #ef4444;
+            border-radius: 4px;
+        }
+        .flex {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tag {
+            background: #ecfdf3;
+            color: #0e7330;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 16px 0 8px;
+        }
+        .filter-chip {
+            background: #ffffff;
+            border: 1px solid #d7e0ea;
+            border-radius: 30px;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .filter-chip.active {
+            background: #1e4b8f;
+            border-color: #1e4b8f;
+            color: white;
+        }
+        .text-muted {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .investigation-panel {
+            background: #fafcff;
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 12px;
+            border: 1px solid #e2eaf5;
+        }
+        .pattern-tag {
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .separator {
+            height: 1px;
+            background: #e9f0f8;
+            margin: 20px 0;
+        }
+        .metric-list {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .metric-list span {
+            background: #f8fafd;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: #2c3e5c;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 24px 0;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        .loader {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .grid > *, .card { min-width: 0; }
+        .flex-between, .header { gap: 12px; flex-wrap: wrap; }
+        .flex { flex-wrap: wrap; }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        button:focus-visible, tr:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+        @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { body { padding: 12px; } .stats-grid { grid-template-columns: 1fr 1fr; } .header h1 { font-size: 1.4rem; } }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-shield-alt"></i> Market Sentinel · Anomaly Detection</h1>
+        <div class="badge"><i class="fas fa-sync-alt"></i> synthetic data · simulation</div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-grid" id="statsRow">
+        <div class="stat-item">
+            <div class="stat-label">Flagged anomalies</div>
+            <div class="stat-value" id="totalAnomalies">0</div>
+            <div class="stat-sub">current session</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">High/Critical</div>
+            <div class="stat-value" id="highRiskCount">0</div>
+            <div class="stat-sub">priority score ≥ 70</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">False positives</div>
+            <div class="stat-value" id="falsePositiveCount">0</div>
+            <div class="stat-sub">reviewed as benign</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Open investigations</div>
+            <div class="stat-value" id="openInvestigations">0</div>
+            <div class="stat-sub">pending action</div>
+        </div>
+    </div>
+
+    <!-- Control bar -->
+    <div class="card" style="margin-bottom: 20px; padding: 14px 22px;">
+        <div class="flex-between">
+            <div class="flex" style="gap: 12px;">
+                <button class="btn" id="generateTradesBtn"><i class="fas fa-chart-line"></i> Simulate 20 trades</button>
+                <button class="btn" id="resetSessionBtn"><i class="fas fa-undo-alt"></i> Reset session</button>
+            </div>
+            <div>
+                <span class="text-muted"><i class="fas fa-microchip"></i> Per-symbol statistical scoring · simulated trades</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main grid: alerts table & investigation -->
+    <div class="grid">
+        <!-- LEFT: anomaly alerts -->
+        <div class="card" style="padding: 18px 16px;">
+            <div class="flex-between" style="margin-bottom: 12px;">
+                <h3 style="font-weight: 600; font-size: 1.2rem; color: #0b1e3a;"><i class="fas fa-exclamation-triangle" style="color: #e11d48; margin-right: 8px;"></i>Anomaly alerts</h3>
+                <div class="control-group" style="margin: 0;">
+                    <button type="button" class="filter-chip active" data-filter="all">All</button>
+                    <button type="button" class="filter-chip" data-filter="high">High/Critical</button>
+                    <button type="button" class="filter-chip" data-filter="open">Open</button>
+                </div>
+            </div>
+            <div style="max-height: 480px; overflow-y: auto; padding-right: 4px;" id="alertsTableContainer">
+                <table id="alertsTable">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Score</th>
+                            <th>Priority</th>
+                            <th>Pattern</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertsBody">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+                <div id="noAlertsMsg" class="empty-state" style="display: none;">No alerts match the filter</div>
+            </div>
+        </div>
+
+        <!-- RIGHT: investigation workflow -->
+        <div class="card" style="padding: 18px 16px;">
+            <div class="flex-between" style="margin-bottom: 16px;">
+                <h3 style="font-weight: 600; font-size: 1.2rem; color: #0b1e3a;"><i class="fas fa-binoculars" style="color: #2563eb; margin-right: 8px;"></i>Investigation panel</h3>
+                <span class="tag" id="selectedAlertTag"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> no alert selected</span>
+            </div>
+            <div id="investigationContent">
+                <div class="empty-state">
+                    <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 8px; display: block;"></i>
+                    Select an alert from the list to start investigation
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- pattern recognition / false positive management hints -->
+    <div class="card" style="padding: 18px 20px;">
+        <div class="flex-between" style="margin-bottom: 10px;">
+            <h4 style="font-weight: 500; color: #1e3a5f;"><i class="fas fa-fingerprint" style="margin-right: 8px;"></i>Pattern recognition & false positive management</h4>
+            <button class="btn btn-sm" id="markFalsePositiveBtn" disabled><i class="fas fa-ban"></i> Mark selected as false positive</button>
+        </div>
+        <div class="metric-list">
+            <span><i class="fas fa-wave-square"></i> Volume spike</span>
+            <span><i class="fas fa-arrow-trend-up"></i> Price deviation</span>
+            <span><i class="fas fa-clock"></i> Volume drop</span>
+            <span><i class="fas fa-chart-pie"></i> Combined deviation</span>
+            <span><i class="fas fa-robot"></i> Statistical heuristics</span>
+        </div>
+        <div class="separator"></div>
+        <div class="flex" style="gap: 16px; flex-wrap: wrap;">
+            <div class="flex" style="gap: 6px;"><i class="fas fa-circle-check" style="color: #16a34a;"></i> <span class="text-muted">False positives: manually reviewed</span></div>
+            <div class="flex" style="gap: 6px;"><i class="fas fa-chart-simple" style="color: #2563eb;"></i> <span class="text-muted">Rolling per-symbol baseline · 2σ signals</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- synthetic trade generation & anomaly detection core ----------
+        // We'll maintain a set of simulated trades and derived anomalies.
+        // Use a simple state store.
+
+        // symbols universe
+        const SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'NVDA', 'AMZN', 'META', 'JPM', 'XOM', 'BTC-USD', 'ETH-USD'];
+        // Patterns that can be assigned to anomalies
+        const PATTERNS = ['Volume spike', 'Price gap', 'Wash trading', 'Spoofing', 'Momentum ignition', 'Layering', 'Odd lot'];
+
+        // State
+        let trades = [];                // all generated trades (raw)
+        let anomalies = [];            // { id, symbol, timestamp, price, volume, score, priority (1-100), pattern, status ('open'|'investigating'|'resolved'|'false_positive'), investigationNotes }
+        
+        let selectedAlertId = null;
+        let currentFilter = 'all';      // 'all', 'high', 'open'
+        let nextAnomalyId = 1;
+
+        // Simple statistical baseline: rolling window for each symbol? We'll just compute global for prototype.
+        // But for realistic anomalies, we'll generate normal trades then inject anomalies.
+
+        // function to generate a single trade
+        function generateTrade(forceAnomaly = false) {
+            const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+            const basePrice = symbol.includes('BTC') ? 60000 + Math.random() * 2000 :
+                              symbol.includes('ETH') ? 3000 + Math.random() * 200 :
+                              symbol === 'AAPL' ? 180 + Math.random() * 20 :
+                              symbol === 'MSFT' ? 400 + Math.random() * 20 :
+                              symbol === 'TSLA' ? 250 + Math.random() * 30 :
+                              symbol === 'NVDA' ? 800 + Math.random() * 60 :
+                              symbol === 'AMZN' ? 170 + Math.random() * 15 :
+                              symbol === 'META' ? 500 + Math.random() * 30 :
+                              symbol === 'JPM' ? 200 + Math.random() * 15 :
+                              symbol === 'XOM' ? 110 + Math.random() * 10 : 100;
+            let price = basePrice * (0.99 + Math.random() * 0.02);
+            let volume = Math.floor(1000 + Math.random() * 9000);
+
+            if (forceAnomaly) {
+                // inject an anomaly signal
+                const anomalyType = Math.random();
+                if (anomalyType < 0.33) {
+                    // volume spike
+                    volume = Math.floor(volume * (3 + Math.random() * 5));
+                } else if (anomalyType < 0.66) {
+                    // price deviation
+                    price = price * (0.95 + Math.random() * 0.1) * (Math.random() > 0.5 ? 1.12 : 0.88);
+                } else {
+                    // both
+                    volume = Math.floor(volume * 4);
+                    price = price * 1.15;
+                }
+            }
+            return {
+                id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).substring(2),
+                symbol,
+                price: parseFloat(price.toFixed(2)),
+                volume,
+                timestamp: Date.now(),
+            };
+        }
+
+        // statistical + ML-ish anomaly scoring (relative to rolling recent trades)
+        // We'll use simple z-scores with a small rolling window (last 50 trades) and also absolute thresholds
+        function computeAnomalyScore(trade, recentTrades) {
+            if (recentTrades.length < 5) return { score: 0, pattern: '' }; // not enough data
+
+            const volumes = recentTrades.map(t => t.volume);
+            const prices = recentTrades.map(t => t.price);
+            const avgVol = volumes.reduce((a,b) => a+b, 0) / volumes.length;
+            const stdVol = Math.sqrt(volumes.reduce((a,b) => a + Math.pow(b - avgVol, 2), 0) / volumes.length) || 1;
+            const avgPrice = prices.reduce((a,b) => a+b, 0) / prices.length;
+            const stdPrice = Math.sqrt(prices.reduce((a,b) => a + Math.pow(b - avgPrice, 2), 0) / prices.length) || 1;
+
+            const zVol = (trade.volume - avgVol) / stdVol;
+            const zPrice = (trade.price - avgPrice) / stdPrice;
+
+            // ML-inspired: combine z-scores with non-linear scaling (like isolation forest rough approximation)
+            // and incorporate "pattern" based on which dimension is more extreme.
+            let score = 0;
+            let pattern = '';
+
+            if (Math.abs(zVol) > 2.0 && Math.abs(zVol) > Math.abs(zPrice)) {
+                score = Math.min(100, 50 + Math.abs(zVol) * 15);
+                pattern = zVol > 0 ? 'Volume spike' : 'Volume drop (rare)';
+            } else if (Math.abs(zPrice) > 2.0) {
+                score = Math.min(100, 50 + Math.abs(zPrice) * 15);
+                pattern = zPrice > 0 ? 'Price gap up' : 'Price gap down';
+            } else if (Math.abs(zVol) > 1.5 && Math.abs(zPrice) > 1.5) {
+                score = Math.min(100, 40 + (Math.abs(zVol) + Math.abs(zPrice)) * 10);
+                pattern = 'Combined deviation';
+            } else {
+                // low anomaly, maybe random pattern for minor
+                score = Math.max(0, (Math.abs(zVol) * 5 + Math.abs(zPrice) * 5));
+                pattern = 'Minor deviation';
+            }
+
+            return { score: Math.round(Math.min(99, score)), pattern: pattern || 'Unusual activity' };
+        }
+
+        // generate a new trade, compute anomaly score, and add to anomalies if above threshold
+        function processNewTrade(forceAnomaly = false) {
+            const trade = generateTrade(forceAnomaly);
+            // rolling window of last 50 trades (excluding new)
+            const recent = trades.filter(t => t.symbol === trade.symbol).slice(-50);
+            const { score, pattern } = computeAnomalyScore(trade, recent);
+
+            // add to trades list (keep max 500)
+            trades.push(trade);
+            if (trades.length > 500) trades.shift();
+
+            // anomaly threshold: dynamic but we also force anomalies if forceAnomaly
+            const threshold = 45; // lower threshold when forced to ensure detection
+            if (score > threshold) {
+                // determine priority based on score & extra random factor
+                let priority = score;
+                if (pattern.includes('Wash') || pattern.includes('Spoof') || pattern.includes('Layering')) priority = Math.min(100, priority + 10);
+
+                // status: open initially, unless priority is low then maybe still open
+                const newAnomaly = {
+                    id: nextAnomalyId++,
+                    context: [...recent.slice(-10), trade],
+                    symbol: trade.symbol,
+                    timestamp: trade.timestamp,
+                    price: trade.price,
+                    volume: trade.volume,
+                    score: score,
+                    priority: priority,
+                    pattern: pattern,
+                    status: 'open',
+                    investigationNotes: '',
+                };
+                anomalies.push(newAnomaly);
+                // sort by priority descending (most critical first)
+                anomalies.sort((a,b) => b.priority - a.priority);
+            }
+            // else no anomaly
+        }
+
+        // ---------- UI rendering ----------
+        function renderStats() {
+            const total = anomalies.length;
+            const highRisk = anomalies.filter(a => a.priority >= 70).length;
+            const fpCount = anomalies.filter(a => a.status === 'false_positive').length;
+            const openInv = anomalies.filter(a => a.status === 'open' || a.status === 'investigating').length;
+
+            document.getElementById('totalAnomalies').textContent = total;
+            document.getElementById('highRiskCount').textContent = highRisk;
+            document.getElementById('falsePositiveCount').textContent = fpCount;
+            document.getElementById('openInvestigations').textContent = openInv;
+        }
+
+        // get filtered anomalies based on current filter
+        function getFilteredAnomalies() {
+            if (currentFilter === 'all') return anomalies;
+            if (currentFilter === 'high') return anomalies.filter(a => a.priority >= 70);
+            if (currentFilter === 'open') return anomalies.filter(a => a.status === 'open' || a.status === 'investigating');
+            return anomalies;
+        }
+
+        function renderAlertsTable() {
+            const tbody = document.getElementById('alertsBody');
+            const filtered = getFilteredAnomalies();
+            const noAlertsMsg = document.getElementById('noAlertsMsg');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                noAlertsMsg.style.display = 'block';
+                return;
+            }
+            noAlertsMsg.style.display = 'none';
+
+            let html = '';
+            filtered.forEach(a => {
+                let statusBadge = '';
+                if (a.status === 'open') statusBadge = '<span class="badge-low">Open</span>';
+                else if (a.status === 'investigating') statusBadge = '<span class="badge-medium">Investigating</span>';
+                else if (a.status === 'resolved') statusBadge = '<span class="badge-resolved">Resolved</span>';
+                else if (a.status === 'false_positive') statusBadge = '<span class="badge-fp">False positive</span>';
+
+                let priorityClass = '';
+                let priorityLabel = '';
+                if (a.priority >= 85) { priorityClass = 'badge-critical'; priorityLabel = 'Critical'; }
+                else if (a.priority >= 70) { priorityClass = 'badge-high'; priorityLabel = 'High'; }
+                else if (a.priority >= 50) { priorityClass = 'badge-medium'; priorityLabel = 'Medium'; }
+                else { priorityClass = 'badge-low'; priorityLabel = 'Low'; }
+
+                // score bar width
+                const scorePercent = Math.min(100, a.score);
+
+                html += `<tr tabindex="0" role="button" aria-label="Investigate ${a.symbol} alert ${a.id}" data-id="${a.id}" class="${selectedAlertId === a.id ? 'selected-row' : ''}" style="cursor: pointer; ${selectedAlertId === a.id ? 'background: #eef4ff;' : ''}">
+                    <td><strong>${a.symbol}</strong></td>
+                    <td>
+                        <div class="score-bar"><div class="score-fill" style="width: ${scorePercent}%; background: ${a.priority >= 70 ? '#e11d48' : (a.priority >= 50 ? '#f59e0b' : '#3b82f6')};"></div></div>
+                        ${a.score}
+                    </td>
+                    <td><span class="${priorityClass}">${priorityLabel} (${a.priority})</span></td>
+                    <td><span class="pattern-tag">${a.pattern}</span></td>
+                    <td>${statusBadge}</td>
+                    <td><i class="fas fa-chevron-right" style="color: #94a3b8;"></i></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            // attach click listeners to rows
+            document.querySelectorAll('#alertsBody tr').forEach(row => {
+                row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectAlert(Number(row.dataset.id)); } });
+                row.addEventListener('click', (e) => {
+                    const id = parseInt(row.dataset.id, 10);
+                    selectAlert(id);
+                });
+            });
+        }
+
+        function selectAlert(id) {
+            selectedAlertId = id;
+            renderAlertsTable();   // to highlight
+            renderInvestigationPanel();
+
+        }
+
+        function renderInvestigationPanel() {
+            const container = document.getElementById('investigationContent');
+            const tag = document.getElementById('selectedAlertTag');
+            const fpBtn = document.getElementById('markFalsePositiveBtn');
+
+            if (!selectedAlertId) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 8px; display: block;"></i>Select an alert from the list to start investigation</div>`;
+                tag.innerHTML = `<i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px;"></i> no alert selected`;
+                fpBtn.disabled = true;
+                return;
+            }
+
+            const alert = anomalies.find(a => a.id === selectedAlertId);
+            if (!alert) {
+                container.innerHTML = `<div class="empty-state">Alert not found</div>`;
+                return;
+            }
+
+            tag.innerHTML = `<i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 4px; color: #2563eb;"></i> ${alert.symbol} · #${alert.id}`;
+            fpBtn.disabled = (alert.status === 'false_positive' || alert.status === 'resolved');
+
+            // build detail card
+            let statusActionButtons = '';
+            if (alert.status === 'open') {
+                statusActionButtons = `<button class="btn btn-sm" id="startInvestigationBtn" style="margin-right: 8px;"><i class="fas fa-play"></i> Start investigation</button>`;
+            } else if (alert.status === 'investigating') {
+                statusActionButtons = `<button class="btn btn-sm" id="resolveAlertBtn" style="margin-right: 8px;"><i class="fas fa-check-circle"></i> Resolve alert</button>`;
+            } else {
+                statusActionButtons = `<span class="badge-resolved">${alert.status === 'resolved' ? 'Resolved' : 'False positive'}</span>`;
+            }
+
+            container.innerHTML = `
+                <div class="investigation-panel">
+                    <div class="flex-between" style="margin-bottom: 12px;">
+                        <div>
+                            <span style="font-weight: 600; font-size: 1.1rem;">${alert.symbol}</span>
+                            <span class="text-muted" style="margin-left: 8px;">price $${alert.price} · vol ${alert.volume}</span>
+                        </div>
+                        <span class="badge-${alert.priority >= 85 ? 'critical' : alert.priority >= 70 ? 'high' : 'medium'}">Priority ${alert.priority}</span>
+                    </div>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;">
+                        <div><span class="text-muted">Anomaly score</span> <strong>${alert.score}</strong></div>
+                        <div><span class="text-muted">Pattern</span> <span class="pattern-tag">${alert.pattern}</span></div>
+                        <div><span class="text-muted">Detected</span> <strong>${new Date(alert.timestamp).toLocaleTimeString()}</strong></div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        ${statusActionButtons}
+                        <button class="btn btn-sm" id="viewDetailsBtn"><i class="fas fa-chart-bar"></i> View trade context</button>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <label class="text-muted" style="font-size: 0.8rem;">Investigation notes</label>
+                        <textarea id="investigationNotes" rows="2" style="width: 100%; margin-top: 6px; padding: 10px; border-radius: 12px; border: 1px solid #d7e0ea; background: white; font-family: inherit; resize: vertical;" placeholder="Add notes...">${escapeHTML(alert.investigationNotes || '')}</textarea>
+                        <button class="btn btn-sm" id="saveNotesBtn" style="margin-top: 8px;"><i class="fas fa-save"></i> Save notes</button>
+                    </div>
+                </div>
+            `;
+
+            // Attach event listeners
+            if (document.getElementById('startInvestigationBtn')) {
+                document.getElementById('startInvestigationBtn').addEventListener('click', () => {
+                    alert.status = 'investigating';
+                    renderAlertsTable();
+                    renderInvestigationPanel();
+                    renderStats();
+                });
+            }
+            if (document.getElementById('resolveAlertBtn')) {
+                document.getElementById('resolveAlertBtn').addEventListener('click', () => {
+                    alert.status = 'resolved';
+                    renderAlertsTable();
+                    renderInvestigationPanel();
+                    renderStats();
+                });
+            }
+            document.getElementById('viewDetailsBtn')?.addEventListener('click', () => {
+                let context = document.getElementById('tradeContext');
+                if (context) { context.remove(); return; }
+                context = document.createElement('div');
+                context.id = 'tradeContext';
+                context.style.overflowX = 'auto';
+                context.innerHTML = '<h4 style="margin:16px 0 8px">Recent trades for this symbol</h4><p class="text-muted">Last row is the flagged trade. All values are synthetic.</p><table><thead><tr><th>Time</th><th>Price</th><th>Volume</th></tr></thead><tbody>' +
+                    alert.context.map(t => `<tr><td>${new Date(t.timestamp).toLocaleTimeString()}</td><td>$${t.price.toFixed(2)}</td><td>${t.volume.toLocaleString()}</td></tr>`).join('') + '</tbody></table>';
+                container.appendChild(context);
+            });
+            document.getElementById('saveNotesBtn')?.addEventListener('click', () => {
+                const notes = document.getElementById('investigationNotes').value;
+                alert.investigationNotes = notes;
+                document.getElementById('saveNotesBtn').textContent = 'Notes saved for this session';
+            });
+        }
+
+        // mark selected as false positive
+        function markSelectedAsFalsePositive() {
+            if (!selectedAlertId) return;
+            const alert = anomalies.find(a => a.id === selectedAlertId);
+            if (alert && alert.status !== 'false_positive' && alert.status !== 'resolved') {
+                alert.status = 'false_positive';
+
+                renderStats();
+                renderAlertsTable();
+                renderInvestigationPanel();
+                // Disable button after marking
+                document.getElementById('markFalsePositiveBtn').disabled = true;
+            }
+        }
+
+        // render everything
+        function renderAll() {
+            renderStats();
+            renderAlertsTable();
+            renderInvestigationPanel();
+        }
+
+        // reset all data
+        function resetSession() {
+            trades = [];
+            anomalies = [];
+
+            selectedAlertId = null;
+            nextAnomalyId = 1;
+            currentFilter = 'all';
+            // reset filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.dataset.filter === 'all') chip.classList.add('active');
+            });
+            renderAll();
+        }
+
+        // initial seed with some trades and a few anomalies to show functionality
+        function seedInitialData() {
+            // Warm each symbol's baseline without creating startup alerts.
+            for (const symbol of SYMBOLS) {
+                let count = 0;
+                while (count < 20) {
+                    const trade = generateTrade(false);
+                    if (trade.symbol === symbol) { trades.push(trade); count++; }
+                }
+            }
+            // inject 6 anomalies
+            for (let i = 0; i < 6; i++) {
+                processNewTrade(true);
+            }
+            renderAll();
+        }
+
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+        }
+
+        document.getElementById('generateTradesBtn').addEventListener('click', () => {
+            for (let i = 0; i < 20; i++) processNewTrade(Math.random() < 0.25);
+            renderStats();
+            renderAlertsTable();
+        });
+        document.getElementById('resetSessionBtn').addEventListener('click', () => {
+            resetSession();
+            seedInitialData();
+        });
+        document.getElementById('markFalsePositiveBtn').addEventListener('click', markSelectedAsFalsePositive);
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                currentFilter = chip.dataset.filter;
+                document.querySelectorAll('.filter-chip').forEach(item => {
+                    item.classList.toggle('active', item === chip);
+                    item.setAttribute('aria-pressed', String(item === chip));
+                });
+                renderAlertsTable();
+            });
+        });
+        seedInitialData();
+    })();
+</script>
+<footer class="text-muted" style="text-align:center;margin:24px">Prototype: synthetic prices, statistical heuristics, and manual review. No trained ML model or live market feed. Notes last until reset or reload.</footer>
+</body>
+</html>
