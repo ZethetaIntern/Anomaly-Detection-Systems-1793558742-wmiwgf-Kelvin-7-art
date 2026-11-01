@@ -5,7 +5,7 @@ A browser-based prototype that simulates market trades, identifies unusual price
 ## Dashboard Preview
 
 <!-- Replace the path below with your dashboard screenshot. -->
-![Market Sentinel dashboard](images/dashboard.png)
+![Market Sentinel dashboard](https://github.com/Kelvin-7-art/Anomaly-Detection-Systems/blob/main/Anomaly%20Detection%20Systems/anomaly.png)
 
 ## Features
 
